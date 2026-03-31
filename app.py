@@ -1,11 +1,16 @@
 from flask import Flask, request, jsonify
 import requests
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
-CORS(app)  # INI FIX ERROR CORS
+CORS(app)
 
 TOKEN = "Ehb562oipTpZUcFXUYCk"
+
+@app.route('/')
+def home():
+    return "Backend Aktif 🚀"
 
 @app.route('/cek', methods=['POST'])
 def cek():
@@ -23,14 +28,17 @@ def cek():
         res = requests.post(
             "https://api.fonnte.com/validate",
             headers={"Authorization": TOKEN},
-            data={"target": nomor}
+            data={"target": nomor},
+            timeout=10
         )
 
         return jsonify(res.json())
 
     except Exception as e:
-        return jsonify({"registered": False, "error": str(e)})
+        return jsonify({
+            "registered": False,
+            "error": str(e)
+        })
 
-@app.route('/')
-def home():
-    return "Backend Aktif"
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
