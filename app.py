@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
 from flask_cors import CORS
-import time
 
 app = Flask(__name__)
 CORS(app)
@@ -14,41 +13,27 @@ def cek():
         data = request.get_json()
         nomor = str(data.get("nomor", "")).strip()
 
-        # 🔧 NORMALISASI NOMOR
+        # NORMALISASI
         nomor = ''.join(filter(str.isdigit, nomor))
 
         if nomor.startswith("0"):
             nomor = "62" + nomor[1:]
 
         if not nomor.startswith("62"):
-            return jsonify({"registered": False, "note": "format salah"})
+            return jsonify({"registered": False})
 
-        # ⏳ DELAY BIAR GA KENA LIMIT
-        time.sleep(0.5)
-
-        # 🔥 KIRIM PESAN KOSONG (LEBIH AMAN)
+        # 🔥 VALIDASI (INI YANG BENAR)
         res = requests.post(
-            "https://api.fonnte.com/send",
+            "https://api.fonnte.com/validate",
             headers={"Authorization": TOKEN},
-            data={
-                "target": nomor,
-                "message": "."  # tidak ganggu user
-            }
+            data={"target": nomor}
         )
 
         result = res.json()
 
-        # 🔍 VALIDASI HASIL
-        if result.get("status") == True:
-            return jsonify({
-                "registered": True,
-                "detail": "message sent"
-            })
-        else:
-            return jsonify({
-                "registered": False,
-                "detail": result
-            })
+        return jsonify({
+            "registered": result.get("registered", False)
+        })
 
     except Exception as e:
         return jsonify({
