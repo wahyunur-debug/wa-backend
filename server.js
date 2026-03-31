@@ -1,7 +1,8 @@
 const express = require("express");
 const {
   default: makeWASocket,
-  useMultiFileAuthState
+  useMultiFileAuthState,
+  DisconnectReason
 } = require("@whiskeysockets/baileys");
 
 const app = express();
@@ -14,10 +15,28 @@ async function startWA() {
 
   sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true // 🔥 QR MUNCUL DI LOG
+    printQRInTerminal: true // 🔥 QR muncul di log
   });
 
   sock.ev.on("creds.update", saveCreds);
+
+  sock.ev.on("connection.update", (update) => {
+    const { connection, lastDisconnect, qr } = update;
+
+    if (qr) {
+      console.log("🔥 SCAN QR INI:");
+      console.log(qr);
+    }
+
+    if (connection === "close") {
+      console.log("❌ Koneksi putus, reconnect...");
+      startWA();
+    }
+
+    if (connection === "open") {
+      console.log("✅ WhatsApp Connected!");
+    }
+  });
 }
 
 startWA();
@@ -39,6 +58,7 @@ app.post("/cek", async (req, res) => {
     });
 
   } catch (err) {
+    console.log(err);
     res.json({ registered: false });
   }
 });
@@ -47,4 +67,4 @@ app.get("/", (req, res) => {
   res.send("WA Baileys Aktif");
 });
 
-app.listen(3000, () => console.log("Server jalan"));
+app.listen(3000, () => console.log("🚀 Server jalan di port 3000"));
