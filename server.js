@@ -1,3 +1,6 @@
+// 🔥 FIX WAJIB (biar Railway ga error crypto)
+global.crypto = require('crypto').webcrypto;
+
 const makeWASocket = require("@whiskeysockets/baileys").default;
 const { useMultiFileAuthState } = require("@whiskeysockets/baileys");
 const QRCode = require("qrcode");
@@ -15,11 +18,12 @@ async function startBot() {
     sock.ev.on("connection.update", async (update) => {
         const { connection, qr } = update;
 
+        // 🔥 QR muncul di logs
         if (qr) {
             console.log("🔥 SCAN QR INI:");
 
             const qrImage = await QRCode.toDataURL(qr);
-            console.log(qrImage); // 👉 ini link QR
+            console.log(qrImage);
         }
 
         if (connection === "open") {
