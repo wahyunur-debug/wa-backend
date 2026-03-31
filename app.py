@@ -5,7 +5,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)  # INI FIX ERROR CORS
 
-TOKEN = "ISI_TOKEN_LO_DISINI"
+TOKEN = "Ehb562oipTpZUcFXUYCk"
 
 @app.route('/cek', methods=['POST'])
 def cek():
