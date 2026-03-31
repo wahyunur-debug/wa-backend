@@ -3,7 +3,7 @@ import requests
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # INI FIX ERROR CORS
+CORS(app)
 
 TOKEN = "Ehb562oipTpZUcFXUYCk"
 
@@ -13,20 +13,26 @@ def cek():
         data = request.get_json()
         nomor = str(data.get("nomor", "")).strip()
 
-        # FORMAT NOMOR
         if nomor.startswith("0"):
             nomor = "62" + nomor[1:]
 
-        if not nomor.startswith("62"):
-            return jsonify({"registered": False})
-
+        # 🔥 KIRIM PESAN TEST (BUKAN VALIDATE)
         res = requests.post(
-            "https://api.fonnte.com/validate",
+            "https://api.fonnte.com/send",
             headers={"Authorization": TOKEN},
-            data={"target": nomor}
+            data={
+                "target": nomor,
+                "message": "Test"
+            }
         )
 
-        return jsonify(res.json())
+        result = res.json()
+
+        # 🔍 DETEKSI BERHASIL / GAGAL
+        if result.get("status") == True:
+            return jsonify({"registered": True})
+        else:
+            return jsonify({"registered": False})
 
     except Exception as e:
         return jsonify({"registered": False, "error": str(e)})
