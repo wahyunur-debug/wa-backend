@@ -1,40 +1,60 @@
-// 🔥 FIX WAJIB (biar Railway ga error crypto)
-global.crypto = require('crypto').webcrypto;
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
 
-const makeWASocket = require("@whiskeysockets/baileys").default;
-const { useMultiFileAuthState } = require("@whiskeysockets/baileys");
-const QRCode = require("qrcode");
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState("auth");
+const PORT = process.env.PORT || 3000;
+const TOKEN = process.env.FONNTE_TOKEN;
 
-    const sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: false
+// health check
+app.get("/", (req, res) => {
+  res.send("API WA VALIDATOR AKTIF");
+});
+
+// 🔥 VALIDASI NOMOR WA (TANPA KIRIM PESAN)
+app.post("/cek", async (req, res) => {
+  try {
+    let { nomor } = req.body;
+
+    if (!nomor) {
+      return res.status(400).json({ error: "nomor kosong" });
+    }
+
+    // normalisasi
+    nomor = nomor.toString().replace(/\D/g, "");
+    if (nomor.startsWith("0")) nomor = "62" + nomor.slice(1);
+
+    if (!nomor.startsWith("62")) {
+      return res.json({ nomor, registered: false });
+    }
+
+    const response = await fetch("https://api.fonnte.com/validate", {
+      method: "POST",
+      headers: {
+        Authorization: TOKEN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        target: nomor,
+      }),
     });
 
-    sock.ev.on("creds.update", saveCreds);
+    const result = await response.json();
 
-    sock.ev.on("connection.update", async (update) => {
-        const { connection, qr } = update;
-
-        // 🔥 QR muncul di logs
-        if (qr) {
-            console.log("🔥 SCAN QR INI:");
-
-            const qrImage = await QRCode.toDataURL(qr);
-            console.log(qrImage);
-        }
-
-        if (connection === "open") {
-            console.log("✅ WHATSAPP CONNECTED");
-        }
-
-        if (connection === "close") {
-            console.log("❌ DISCONNECTED, RECONNECT...");
-            startBot();
-        }
+    res.json({
+      nomor,
+      registered: result.registered || false,
     });
-}
+  } catch (err) {
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+});
 
-startBot();
+app.listen(PORT, () => {
+  console.log("SERVER RUNNING DI PORT " + PORT);
+});
