@@ -1,60 +1,41 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
+const express = require("express");
+const cors = require("cors");
+const fetch = require("node-fetch");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
-const TOKEN = process.env.FONNTE_TOKEN;
+// 🔥 TOKEN FONNTE LU TARUH DISINI
+const TOKEN = "ISI_TOKEN_FONNTE_KAMU";
 
-// health check
-app.get("/", (req, res) => {
-  res.send("API WA VALIDATOR AKTIF");
-});
-
-// 🔥 VALIDASI NOMOR WA (TANPA KIRIM PESAN)
 app.post("/cek", async (req, res) => {
+  const { nomor } = req.body;
+
   try {
-    let { nomor } = req.body;
-
-    if (!nomor) {
-      return res.status(400).json({ error: "nomor kosong" });
-    }
-
-    // normalisasi
-    nomor = nomor.toString().replace(/\D/g, "");
-    if (nomor.startsWith("0")) nomor = "62" + nomor.slice(1);
-
-    if (!nomor.startsWith("62")) {
-      return res.json({ nomor, registered: false });
-    }
-
     const response = await fetch("https://api.fonnte.com/validate", {
       method: "POST",
       headers: {
-        Authorization: TOKEN,
-        "Content-Type": "application/json",
+        Authorization: TOKEN
       },
-      body: JSON.stringify({
-        target: nomor,
-      }),
+      body: new URLSearchParams({
+        target: nomor
+      })
     });
 
-    const result = await response.json();
+    const data = await response.json();
 
     res.json({
       nomor,
-      registered: result.registered || false,
+      registered: data.registered || false
     });
+
   } catch (err) {
-    res.status(500).json({
-      error: err.message,
+    res.json({
+      nomor,
+      registered: false
     });
   }
 });
 
-app.listen(PORT, () => {
-  console.log("SERVER RUNNING DI PORT " + PORT);
-});
+app.listen(3000, () => console.log("Server jalan"));
