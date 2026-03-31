@@ -1,10 +1,9 @@
-// 🔥 WAJIB PALING ATAS
+// 🔥 FIX WAJIB (BIAR GA ERROR CRYPTO)
 const crypto = require("crypto")
 global.crypto = crypto
 
 const express = require("express")
 const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys")
-const qrcode = require("qrcode-terminal")
 
 const app = express()
 app.use(express.json())
@@ -15,7 +14,8 @@ async function startWA() {
     const { state, saveCreds } = await useMultiFileAuthState("session")
 
     sock = makeWASocket({
-        auth: state
+        auth: state,
+        printQRInTerminal: false
     })
 
     sock.ev.on("creds.update", saveCreds)
@@ -23,9 +23,10 @@ async function startWA() {
     sock.ev.on("connection.update", (update) => {
         const { connection, qr } = update
 
+        // 🔥 QR LINK (ANTI GA KELIATAN DI RAILWAY)
         if (qr) {
             console.log("🔥 SCAN QR INI:")
-            qrcode.generate(qr, { small: true })
+            console.log("https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + qr)
         }
 
         if (connection === "open") {
@@ -41,10 +42,12 @@ async function startWA() {
 
 startWA()
 
+// 🔥 API CEK NOMOR WA
 app.post("/cek", async (req, res) => {
     try {
         let nomor = req.body.nomor || ""
 
+        // normalisasi nomor
         nomor = nomor.replace(/\D/g, "")
         if (nomor.startsWith("0")) nomor = "62" + nomor.slice(1)
 
@@ -64,6 +67,11 @@ app.post("/cek", async (req, res) => {
     }
 })
 
+// health check
+app.get("/", (req, res) => {
+    res.send("WA Backend Aktif 🚀")
+})
+
 app.listen(3000, () => {
-    console.log("🚀 SERVER JALAN DI PORT 3000")
+    console.log("🚀 SERVER RUNNING PORT 3000")
 })
