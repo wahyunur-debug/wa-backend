@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // 🔥 TOKEN FONNTE LU TARUH DISINI
-const TOKEN = "ISI_TOKEN_FONNTE_KAMU";
+const TOKEN = "Ehb562oipTpZUcFXUYCk";
 
 app.post("/cek", async (req, res) => {
   const { nomor } = req.body;
