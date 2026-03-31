@@ -8,23 +8,22 @@ TOKEN = "Ehb562oipTpZUcFXUYCk"
 @app.route('/cek', methods=['POST'])
 def cek():
     data = request.get_json()
-    nomor = data.get("nomor")
+    nomor = str(data.get("nomor", ""))
 
-    try:
-        res = requests.post(
-            "https://api.fonnte.com/validate",
-            headers={"Authorization": TOKEN},
-            data={"target": nomor}
-        )
+    if nomor.startswith("0"):
+        nomor = "62" + nomor[1:]
 
-        return jsonify(res.json())
+    if not nomor.startswith("62"):
+        return jsonify({"registered": False})
 
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    res = requests.post(
+        "https://api.fonnte.com/validate",
+        headers={"Authorization": TOKEN},
+        data={"target": nomor}
+    )
+
+    return jsonify(res.json())
 
 @app.route('/')
 def home():
-    return "Backend WA Checker Active"
-
-if __name__ == "__main__":
-    app.run()
+    return "Backend Aktif"
