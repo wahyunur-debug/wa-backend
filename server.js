@@ -1,59 +1,61 @@
-const express = require("express");
-const cors = require("cors");
-const fetch = require("node-fetch");
+from flask import Flask, request, jsonify
+import requests
+from flask_cors import CORS
+import time
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+app = Flask(__name__)
+CORS(app)
 
-// TOKEN LU (langsung pake)
-const TOKEN = "Ehb562oipTpZUcFXUYCk";
+TOKEN = "Ehb562oipTpZUcFXUYCk"
 
-app.get("/", (req, res) => {
-  res.send("API WA CHECKER READY");
-});
+@app.route('/cek', methods=['POST'])
+def cek():
+    try:
+        data = request.get_json()
+        nomor = str(data.get("nomor", "")).strip()
 
-app.post("/cek", async (req, res) => {
-  const { nomor } = req.body;
+        # 🔧 NORMALISASI NOMOR
+        nomor = ''.join(filter(str.isdigit, nomor))
 
-  if (!nomor) {
-    return res.json({ nomor, status: "KOSONG" });
-  }
+        if nomor.startswith("0"):
+            nomor = "62" + nomor[1:]
 
-  try {
-    const response = await fetch("https://api.fonnte.com/validate", {
-      method: "POST",
-      headers: {
-        Authorization: TOKEN
-      },
-      body: new URLSearchParams({
-        target: nomor
-      })
-    });
+        if not nomor.startswith("62"):
+            return jsonify({"registered": False, "note": "format salah"})
 
-    const result = await response.json();
+        # ⏳ DELAY BIAR GA KENA LIMIT
+        time.sleep(0.5)
 
-    console.log("RESULT:", result);
+        # 🔥 KIRIM PESAN KOSONG (LEBIH AMAN)
+        res = requests.post(
+            "https://api.fonnte.com/send",
+            headers={"Authorization": TOKEN},
+            data={
+                "target": nomor,
+                "message": "."  # tidak ganggu user
+            }
+        )
 
-    let status = "TIDAK TERDAFTAR";
+        result = res.json()
 
-    if (result && result.status === true) {
-      status = "TERDAFTAR";
-    }
+        # 🔍 VALIDASI HASIL
+        if result.get("status") == True:
+            return jsonify({
+                "registered": True,
+                "detail": "message sent"
+            })
+        else:
+            return jsonify({
+                "registered": False,
+                "detail": result
+            })
 
-    res.json({
-      nomor,
-      status
-    });
+    except Exception as e:
+        return jsonify({
+            "registered": False,
+            "error": str(e)
+        })
 
-  } catch (err) {
-    console.log(err);
-    res.json({
-      nomor,
-      status: "ERROR"
-    });
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server jalan di port " + PORT));
+@app.route('/')
+def home():
+    return "Backend Aktif"
