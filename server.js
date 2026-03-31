@@ -1,61 +1,50 @@
 const express = require("express");
-const cors = require("cors");
-const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const {
+  default: makeWASocket,
+  useMultiFileAuthState
+} = require("@whiskeysockets/baileys");
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 
 let sock;
 
 async function startWA() {
-    const { state, saveCreds } = await useMultiFileAuthState("auth");
+  const { state, saveCreds } = await useMultiFileAuthState("session");
 
-    sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: true
-    });
+  sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: true // 🔥 QR MUNCUL DI LOG
+  });
 
-    sock.ev.on("creds.update", saveCreds);
-
-    sock.ev.on("connection.update", (update) => {
-        const { connection } = update;
-
-        if (connection === "open") {
-            console.log("✅ WA CONNECTED");
-        }
-    });
+  sock.ev.on("creds.update", saveCreds);
 }
 
 startWA();
 
 app.post("/cek", async (req, res) => {
-    try {
-        let nomor = req.body.nomor;
+  try {
+    let nomor = req.body.nomor;
 
-        nomor = nomor.replace(/\D/g, "");
+    nomor = nomor.replace(/\D/g, "");
 
-        if (nomor.startsWith("0")) {
-            nomor = "62" + nomor.slice(1);
-        }
-
-        const result = await sock.onWhatsApp(nomor + "@s.whatsapp.net");
-
-        if (result.length > 0) {
-            return res.json({ registered: true });
-        } else {
-            return res.json({ registered: false });
-        }
-
-    } catch (err) {
-        return res.json({ registered: false, error: err.message });
+    if (nomor.startsWith("0")) {
+      nomor = "62" + nomor.slice(1);
     }
+
+    const result = await sock.onWhatsApp(nomor + "@s.whatsapp.net");
+
+    res.json({
+      registered: result.length > 0
+    });
+
+  } catch (err) {
+    res.json({ registered: false });
+  }
 });
 
 app.get("/", (req, res) => {
-    res.send("WA BOT RUNNING");
+  res.send("WA Baileys Aktif");
 });
 
-app.listen(3000, () => {
-    console.log("Server jalan di port 3000");
-});
+app.listen(3000, () => console.log("Server jalan"));
