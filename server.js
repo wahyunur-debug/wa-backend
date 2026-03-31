@@ -6,18 +6,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ambil dari environment (AMAN)
-const TOKEN = process.env.FONNTE_TOKEN || "Ehb562oipTpZUcFXUYCk";
+const TOKEN = "Ehb562oipTpZUcFXUYCk"; // token lu
 
 app.get("/", (req, res) => {
-  res.send("WA Checker API Ready");
+  res.send("API READY");
 });
 
 app.post("/cek", async (req, res) => {
   const { nomor } = req.body;
 
   if (!nomor) {
-    return res.status(400).json({ error: "Nomor kosong" });
+    return res.json({ nomor, status: "KOSONG" });
   }
 
   try {
@@ -31,21 +30,29 @@ app.post("/cek", async (req, res) => {
       })
     });
 
-    const data = await response.json();
+    const result = await response.json();
+
+    console.log(result);
+
+    // 🔥 FIX INTI DI SINI
+    let status = "TIDAK TERDAFTAR";
+
+    if (result && result.status === true) {
+      status = "TERDAFTAR";
+    }
 
     res.json({
       nomor,
-      registered: data.registered || false
+      status
     });
 
   } catch (err) {
     console.log(err);
     res.json({
       nomor,
-      registered: false
+      status: "ERROR SERVER"
     });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server jalan di port " + PORT));
+app.listen(3000, () => console.log("Server jalan"));
