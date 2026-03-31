@@ -6,10 +6,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const TOKEN = "Ehb562oipTpZUcFXUYCk"; // token lu
+// TOKEN LU (langsung pake)
+const TOKEN = "Ehb562oipTpZUcFXUYCk";
 
 app.get("/", (req, res) => {
-  res.send("API READY");
+  res.send("API WA CHECKER READY");
 });
 
 app.post("/cek", async (req, res) => {
@@ -32,9 +33,8 @@ app.post("/cek", async (req, res) => {
 
     const result = await response.json();
 
-    console.log(result);
+    console.log("RESULT:", result);
 
-    // 🔥 FIX INTI DI SINI
     let status = "TIDAK TERDAFTAR";
 
     if (result && result.status === true) {
@@ -50,9 +50,10 @@ app.post("/cek", async (req, res) => {
     console.log(err);
     res.json({
       nomor,
-      status: "ERROR SERVER"
+      status: "ERROR"
     });
   }
 });
 
-app.listen(3000, () => console.log("Server jalan"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Server jalan di port " + PORT));
